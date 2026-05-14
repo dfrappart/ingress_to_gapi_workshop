@@ -1,0 +1,20 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-nodeport-gw
+  namespace: envoytest
+spec:
+  gatewayClassName: envoy-nodeport
+  listeners:
+  - protocol: HTTPS
+    port: 443
+    name: envoy-gateway
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: k8scalico1
+        namespace: certificates

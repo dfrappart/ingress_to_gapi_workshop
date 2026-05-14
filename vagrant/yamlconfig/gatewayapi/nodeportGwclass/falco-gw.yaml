@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sharedgw
+spec: {}
+status: {}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-ciliumgateway-to-ref-secrets
+  namespace: sharedtls
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: sharedgw
+  to:
+  - group: ""
+    kind: Secret    
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: falco-gw-tls
+  namespace: sharedgw
+spec:
+  gatewayClassName: nodeport-gateway-class
+  listeners:
+  - protocol: HTTPS
+    port: 443
+    name: cilium-gateway
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: k8scilium1tls
+        namespace: sharedtls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: https-falco
+spec:
+  parentRefs:
+  - name: falco-gw-tls
+    namespace: sharedgw
+  hostnames:
+  - "k8scilium1"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: falcosidekick
+      port: 2801
+      kind: Service
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: falco-ui-gw-tls
+  namespace: sharedgw
+spec:
+  gatewayClassName: nodeport-gateway-class
+  listeners:
+  - protocol: HTTPS
+    port: 443
+    name: cilium-gateway
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: k8scilium1tls
+        namespace: sharedtls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: https-falco-ui
+spec:
+  parentRefs:
+  - name: falco-ui-gw-tls
+    namespace: sharedgw
+  hostnames:
+  - "k8scilium1"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: falcosidekick-ui
+      port: 2802
+      kind: Service
+       
+  

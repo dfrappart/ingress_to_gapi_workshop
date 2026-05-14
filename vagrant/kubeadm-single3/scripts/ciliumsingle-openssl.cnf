@@ -1,0 +1,20 @@
+# ciliumsingle-openssl.cnf
+[ req ]
+default_bits       = 4096
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[ dn ]
+C  = Fr
+O  = dfitc
+CN = k8scilium1.app.teknews.cloud
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = k8scilium1.app.teknews.cloud
+DNS.2 = k8scilium1
+IP.1  = 192.168.56.17

@@ -1,0 +1,24 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundam-httproute
+  namespace: gundam
+spec:
+  parentRefs:
+  - name: gundam-gw #shared-gw #shared-gw-tls
+    namespace: gundam #ciliumgateway
+  rules:
+  - backendRefs:
+    - name: barbatossvc
+      port: 8090
+      kind: Service
+    matches:
+    - path:
+        type: PathPrefix
+        value: /barbatos
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /

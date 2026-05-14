@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demoapp
+spec: {}
+status: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: demoapp
+  name: demoapp
+  namespace: demoapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demoapp
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: demoapp
+    spec:
+      securityContext: {}
+#        seccompProfile:
+#          type: RuntimeDefault
+#        seccompProfile:
+#          type: Localhost
+#          localhostProfile: profiles/audit.json       
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: demoapp
+  name: demoappsvc
+  namespace: demoapp
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: demoapp
+status:
+  loadBalancer: {}
+---

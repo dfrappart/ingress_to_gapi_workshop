@@ -1,0 +1,15 @@
+K8SSERVER_COUNT = 1
+IMAGE = "bento/ubuntu-24.04"
+
+Vagrant.configure("2") do |config|
+
+  (1..K8SSERVER_COUNT).each do |i|
+    config.vm.define "k8sserver#{i}" do |k8sservers|
+      k8sservers.vm.box = IMAGE
+      k8sservers.vm.hostname = "k8ssingle#{i+1}"
+      k8sservers.vm.network  :private_network, ip: "192.168.56.#{i+81}"
+      k8sservers.vm.provision "shell", privileged: true,  path: "scripts/k8s_install.sh"
+      k8sservers.vm.provision "file", source: "scripts/k8s_postconfig.sh", destination: "/home/vagrant/k8s_postconfig.sh"
+    end
+  end
+end
