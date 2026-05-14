@@ -141,4 +141,145 @@ helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
 
 ```
 
+Once we are ok with the prerequisite, it's time to install some Gateway API providers.
+
 ## 3. Installing Gateway API
+
+We mentioned that we would work mainly with Cilium and Envoy Gateway.
+
+Cilium, being a multi-purpose CNI, is installed at the cluster creation, or rather just after the kubernetes installation.
+
+It can be updated after to enable its Gateway API feature, but kube-proxy should be disabled to allow the functionnalities to work.
+
+```bash
+
+# install cilium
+echo "Installing Cilium"
+
+echo "set variables for cilium installation"
+
+API_SERVER_IP='API_Server_IP'
+API_SERVER_PORT='API_Server_Port'
+POD_CIDR='POD_CIDR_RANGE'
+
+echo "Adding helm repo for cilium"
+
+helm repo add cilium https://helm.cilium.io/
+
+helm repo update
+
+echo "Installing Cilium with Helm"
+
+helm upgrade cilium cilium/cilium \
+    --install \
+    --namespace kube-system \
+    --reuse-values \
+    --version "1.19.3" \
+    --set kubeProxyReplacement=true \
+    --set gatewayAPI.enabled=true \
+    --set hubble.enabled=true \
+    --set hubble.relay.enabled=true \
+    --set hubble.ui.enabled=true \
+    --set k8sServiceHost=${API_SERVER_IP} \
+    --set k8sServicePort=${API_SERVER_PORT} \
+    --set ipam.operator.clusterPoolIPv4PodCIDRList=${POD_CIDR}
+
+```
+
+Installing Envoy Gateway can be done at any time, but we still need the Gateway API to be installed before.
+
+```bash
+
+echo "Installing Envoy Gateway"
+
+helm install eg oci://docker.io/envoyproxy/gateway-helm \
+  --version v1.7.3 \
+  -n envoy-gateway-system \
+  --create-namespace \
+  --skip-crds
+
+```
+
+For Cilium case, once everything is installed, we should have the CRDs available
+
+```bash
+
+vagrant@cilium2:~$ k get crd | grep gateway.net
+backendtlspolicies.gateway.networking.k8s.io   2026-05-13T08:58:11Z
+gatewayclasses.gateway.networking.k8s.io       2026-05-13T08:58:11Z
+gateways.gateway.networking.k8s.io             2026-05-13T08:58:11Z
+grpcroutes.gateway.networking.k8s.io           2026-05-13T08:58:11Z
+httproutes.gateway.networking.k8s.io           2026-05-13T08:58:11Z
+referencegrants.gateway.networking.k8s.io      2026-05-13T08:58:11Z
+
+```
+
+Everything green regarding the Cilium status
+
+```bash
+
+vagrant@cilium2:~$ cilium status
+    /¯¯\
+ /¯¯\__/¯¯\    Cilium:             OK
+ \__/¯¯\__/    Operator:           OK
+ /¯¯\__/¯¯\    Envoy DaemonSet:    OK
+ \__/¯¯\__/    Hubble Relay:       OK
+    \__/       ClusterMesh:        disabled
+
+DaemonSet              cilium                   Desired: 1, Ready: 1/1, Available: 1/1
+DaemonSet              cilium-envoy             Desired: 1, Ready: 1/1, Available: 1/1
+Deployment             cilium-operator          Desired: 1, Ready: 1/1, Available: 1/1
+Deployment             hubble-relay             Desired: 1, Ready: 1/1, Available: 1/1
+Deployment             hubble-ui                Desired: 1, Ready: 1/1, Available: 1/1
+Containers:            cilium                   Running: 1
+                       cilium-envoy             Running: 1
+                       cilium-operator          Running: 1
+                       clustermesh-apiserver    
+                       hubble-relay             Running: 1
+                       hubble-ui                Running: 1
+Cluster Pods:          5/5 managed by Cilium
+Helm chart version:    1.19.3
+Image versions         cilium             quay.io/cilium/cilium:v1.19.3@sha256:2e61680593cddca8b6c055f6d4c849d87a26a1c91c7e3b8b56c7fb76ab7b7b10: 1
+                       cilium-envoy       quay.io/cilium/cilium-envoy:v1.36.6-1776000132-2437d2edeaf4d9b56ef279bd0d71127440c067aa@sha256:ba0ab8adac082d50d525fd2c5ba096c8facea3a471561b7c61c7a5b9c2e0de0d: 1
+                       cilium-operator    quay.io/cilium/operator-generic:v1.19.3@sha256:205b09b0ed6accbf9fe688d312a9f0fcfc6a316fc081c23fbffb472af5dd62cd: 1
+                       hubble-relay       quay.io/cilium/hubble-relay:v1.19.3@sha256:5ee21d57b6ef2aa6db67e603a735fdceb162454b352b7335b651456e308f681b: 1
+                       hubble-ui          quay.io/cilium/hubble-ui-backend:v0.13.3@sha256:db1454e45dc39ca41fbf7cad31eec95d99e5b9949c39daaad0fa81ef29d56953: 1
+                       hubble-ui          quay.io/cilium/hubble-ui:v0.13.3@sha256:661d5de7050182d495c6497ff0b007a7a1e379648e60830dd68c4d78ae21761d: 1
+
+```
+
+And the default Cilium `GatewayClass`
+
+
+```bash
+
+vagrant@cilium2:~$ k get gatewayclasses.gateway.networking.k8s.io 
+NAME     CONTROLLER                     ACCEPTED   AGE
+cilium   io.cilium/gateway-controller   True       172m
+
+```
+
+The CRDs displayed on the Cilium cluster are the one installed with the Envoy Gateway CRD helm chart.
+
+For a cluster using the command provided on the Gateway API releases repository, we should see more CRDs.
+
+```bash
+
+vagrant@calico1:~$ k get crd | grep gateway.net
+backendtlspolicies.gateway.networking.k8s.io            2026-05-13T06:02:15Z
+gatewayclasses.gateway.networking.k8s.io                2026-05-13T06:02:15Z
+gateways.gateway.networking.k8s.io                      2026-05-13T06:02:15Z
+grpcroutes.gateway.networking.k8s.io                    2026-05-13T06:02:15Z
+httproutes.gateway.networking.k8s.io                    2026-05-13T06:02:15Z
+listenersets.gateway.networking.k8s.io                  2026-05-13T06:02:15Z
+referencegrants.gateway.networking.k8s.io               2026-05-13T06:02:15Z
+tcproutes.gateway.networking.k8s.io                     2026-05-13T06:02:15Z
+tlsroutes.gateway.networking.k8s.io                     2026-05-13T06:02:15Z
+udproutes.gateway.networking.k8s.io                     2026-05-13T06:02:15Z
+xbackendtrafficpolicies.gateway.networking.x-k8s.io     2026-05-13T06:02:15Z
+xmeshes.gateway.networking.x-k8s.io                     2026-05-13T06:02:15Z
+
+```
+
+That's all for the prerequisites. Let's move on to the next part.
+
