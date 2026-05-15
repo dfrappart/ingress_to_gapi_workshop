@@ -548,5 +548,7 @@ df@df-2404lts:~$ cat curlresponses.txt | grep -i exia | wc -l
 
 ```
 
+Now we'll have a look at the TLS management.
+
 ## 3. TLS management basics
 
