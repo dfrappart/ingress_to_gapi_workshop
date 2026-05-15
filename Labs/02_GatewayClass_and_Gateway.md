@@ -214,6 +214,49 @@ We'll have a look at that later.
 
 For now, we'll keep in mind that there is no native way to define either the kind of service that we want to use in our GatewayClass, nor any mean to pass potential cloud specific annotations.
 
+If we install the envoy gateway, we can then create a new GatewayClass and a Gateway using a Nodeport.
+
+```bash
+
+vagrant@k8ssingle1:~$ helm upgrade eg oci://docker.io/envoyproxy/gateway-helm \
+  --install \
+  --version v1.7.3 \
+  -n envoy-gateway-system \
+  --create-namespace \
+  --skip-crds
+Release "eg" does not exist. Installing it now.
+Pulled: docker.io/envoyproxy/gateway-helm:v1.7.3
+Digest: sha256:35556e4d71cb85eac2c9dccb317f8aa76f7e84f23c382312cc450a017b44d465
+NAME: eg
+LAST DEPLOYED: Thu May 14 23:59:58 2026
+NAMESPACE: envoy-gateway-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+**************************************************************************
+*** PLEASE BE PATIENT: Envoy Gateway may take a few minutes to install ***
+**************************************************************************
+
+Envoy Gateway is an open source project for managing Envoy Proxy as a standalone or Kubernetes-based application gateway.
+
+Thank you for installing Envoy Gateway! 🎉
+
+Your release is named: eg. 🎉
+
+Your release is in namespace: envoy-gateway-system. 🎉
+
+To learn more about the release, try:
+
+  $ helm status eg -n envoy-gateway-system
+  $ helm get all eg -n envoy-gateway-system
+
+To have a quickstart of Envoy Gateway, please refer to https://gateway.envoyproxy.io/latest/tasks/quickstart.
+
+To get more details, please visit https://gateway.envoyproxy.io and https://github.com/envoyproxy/gateway.
+
+```
+
 Now we look to the Gateway.
 
 ## 3. The Gateway
@@ -348,6 +391,65 @@ Ok, let's customize our `Gateway` through the `GatewayClass` configuration.
 
 ## 4. Customizing the GatewayClass and the Gateway
 
+### 4.1. Passing annotations to the Gateway and its underlying service
+
+Similarly to the gateway class object, we can find the details of the available confuiguration on the gateway api documentation, in the gateway [section](https://gateway-api.sigs.k8s.io/reference/spec/#gateway).
+
+In the Gateway `spec` section, we can find a sub-section named `infrastructure` in which we can specify `AnnotationKey` and `AnnotationValue`. Those annotations, per the field description, are applied to resources created following the gateway creation.
+
+| Field | Description | Validation |
+|-|-|-|
+| annotations object (keys, AnnotationValue) | Annotations that SHOULD be applied to any resources created in response to this Gateway. </br> For implementations creating other Kubernetes objects, this should be the metadata.annotations field on resources. </br>For other implementations, this refers to any relevant (implementation specific) "annotations" concepts. </br>An implementation may chose to add additional implementation-specific annotations as they see fit. | MaxProperties: </br>8 |
+
+We can define a new gateway configuration which includes the `infrastructure` sub-section.
+
+```yaml
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gw-annotated
+  namespace: samplegw
+spec:
+  gatewayClassName: envoy
+  infrastructure:
+    annotations:
+      "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        from: Same
+    name: gw-annotated
+    port: 80
+    protocol: HTTP
+
+```
+
+We get an associated service which inherit the `"service.beta.kubernetes.io/azure-load-balancer-internal": "true"` annotation.
+
+```bash
+
+df@df-2404lts:~$ k get $cal service -n envoy-gateway-system envoy-samplegw-gw-annotated-a21ee9f4 -o json |jq .metadata.annotations
+{
+  "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
+}
+
+
+```
+
+So finally, the capability to define an internal gateway is not on the gateway class but on the gateway itself.
+It may feel counter-intuitive, but considering the segregation of duty define in the gateway api, it kind of make sens since we create as many gateway as we need.
+It does not solve the issue of not having a load balancer available. Let's see how we can adress that.
+
+### 4.2. Using CRDs at the GatewayClass level
+
 We mentionned earlier that the `parametersRef` can be used to reference a CRD specific to the provider.
 
 Typically, with cilium, we would use `CiliumGatewayClassConfig` in which we can specify the service type.
@@ -383,48 +485,7 @@ spec:
 
 ```
 
-If we install the envoy gateway, we can then create a new GatewayClass and a Gateway using a Nodeport.
-
-```bash
-
-vagrant@k8ssingle1:~$ helm upgrade eg oci://docker.io/envoyproxy/gateway-helm \
-  --install \
-  --version v1.7.3 \
-  -n envoy-gateway-system \
-  --create-namespace \
-  --skip-crds
-Release "eg" does not exist. Installing it now.
-Pulled: docker.io/envoyproxy/gateway-helm:v1.7.3
-Digest: sha256:35556e4d71cb85eac2c9dccb317f8aa76f7e84f23c382312cc450a017b44d465
-NAME: eg
-LAST DEPLOYED: Thu May 14 23:59:58 2026
-NAMESPACE: envoy-gateway-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-**************************************************************************
-*** PLEASE BE PATIENT: Envoy Gateway may take a few minutes to install ***
-**************************************************************************
-
-Envoy Gateway is an open source project for managing Envoy Proxy as a standalone or Kubernetes-based application gateway.
-
-Thank you for installing Envoy Gateway! 🎉
-
-Your release is named: eg. 🎉
-
-Your release is in namespace: envoy-gateway-system. 🎉
-
-To learn more about the release, try:
-
-  $ helm status eg -n envoy-gateway-system
-  $ helm get all eg -n envoy-gateway-system
-
-To have a quickstart of Envoy Gateway, please refer to https://gateway.envoyproxy.io/latest/tasks/quickstart.
-
-To get more details, please visit https://gateway.envoyproxy.io and https://github.com/envoyproxy/gateway.
-
-```
+So we can define an envoy based GatewayClass with the CRD specifying the type of service.
 
 ```yaml
 
@@ -495,3 +556,39 @@ vagrant@k8ssingle1:~$ k get gateway -n samplegw test-gw3 -o json |jq .status.con
 ]
 
 ```
+
+We should note that we can also use the `EnvoyProxy` to pass annotations to the underlying service of the Gateways crearted with the class.
+
+To do so the definition would be modified as below.
+
+```yaml
+
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: nodeport-proxy
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+        annotations:
+          "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
+
+```
+
+And we should get the annotations on the service also.
+
+```bash
+
+df@df-2404lts:~$ k $cal get svc -n envoy-gateway-system envoy-samplegw-test-gw3-34d4bed4 -o json | jq .metadata.annotations
+{
+  "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
+}
+
+
+```
+
+Ok, we saw a first set of configurations for the `GatewayClass` and the `Gateway`. Time to expose apps now.

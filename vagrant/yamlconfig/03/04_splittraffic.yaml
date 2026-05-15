@@ -1,0 +1,168 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-eva02
+ namespace: gundam
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to EVA 02 App</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API </h2>
+   <img src="https://riseofgunpla.com/wp-content/uploads/2020/07/75424765_719470355234279_422176357275926528_n-1000x1000.jpg" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: eva02
+  namespace: gundam
+  name: eva02
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eva02
+  template:
+    metadata:
+      labels:
+        app: eva02
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-eva02
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evasvc
+  namespace: gundam
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8091
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: eva02    
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-exia
+ namespace: gundam
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to Exia App</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API </h2>
+   <img src="https://imgs.search.brave.com/F1Miw5SAIQpxwxWpbkMxtFzznghhOZrQ3Z7zqpCBrfI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5jZG53cy5jb20v/X2kvNTg5MzQvMzcw/NS8xNzk3LzcvYmFu/ZGFpLTIwNDU0MzEx/MjUyMjI3Ni5qcGVn" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: exia
+  name: exia
+  namespace: gundam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exia
+  template:
+    metadata:
+      labels:
+        app: exia
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-exia
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exiasvc
+  namespace: gundam
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8092
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: exia       
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gundamsplit-gw
+  namespace: gundam
+spec:
+  gatewayClassName: envoy-nodeport
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: gundamsplit-gw
+    allowedRoutes:
+      namespaces:
+        from: Same  
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundamsplit
+  namespace: gundam
+spec:
+  parentRefs:
+  - name: gundamsplit-gw
+  hostnames:
+  - "k8scalico1"
+  rules:
+  - backendRefs:
+    - kind: Service
+      name: evasvc
+      port: 8091
+      weight: 10
+    - kind: Service
+      name: exiasvc
+      port: 8092
+      weight: 90           
