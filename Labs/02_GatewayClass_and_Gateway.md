@@ -382,3 +382,116 @@ spec:
         type: NodePort
 
 ```
+
+If we install the envoy gateway, we can then create a new GatewayClass and a Gateway using a Nodeport.
+
+```bash
+
+vagrant@k8ssingle1:~$ helm upgrade eg oci://docker.io/envoyproxy/gateway-helm \
+  --install \
+  --version v1.7.3 \
+  -n envoy-gateway-system \
+  --create-namespace \
+  --skip-crds
+Release "eg" does not exist. Installing it now.
+Pulled: docker.io/envoyproxy/gateway-helm:v1.7.3
+Digest: sha256:35556e4d71cb85eac2c9dccb317f8aa76f7e84f23c382312cc450a017b44d465
+NAME: eg
+LAST DEPLOYED: Thu May 14 23:59:58 2026
+NAMESPACE: envoy-gateway-system
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+**************************************************************************
+*** PLEASE BE PATIENT: Envoy Gateway may take a few minutes to install ***
+**************************************************************************
+
+Envoy Gateway is an open source project for managing Envoy Proxy as a standalone or Kubernetes-based application gateway.
+
+Thank you for installing Envoy Gateway! 🎉
+
+Your release is named: eg. 🎉
+
+Your release is in namespace: envoy-gateway-system. 🎉
+
+To learn more about the release, try:
+
+  $ helm status eg -n envoy-gateway-system
+  $ helm get all eg -n envoy-gateway-system
+
+To have a quickstart of Envoy Gateway, please refer to https://gateway.envoyproxy.io/latest/tasks/quickstart.
+
+To get more details, please visit https://gateway.envoyproxy.io and https://github.com/envoyproxy/gateway.
+
+```
+
+```yaml
+
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: nodeport-proxy
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: NodePort
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-nodeport
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: nodeport-proxy
+    namespace: envoy-gateway-system
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-gw3
+  namespace: samplegw
+spec:
+  gatewayClassName: envoy-nodeport
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: test-gw3
+    allowedRoutes:
+      namespaces:
+        from: Same    
+
+
+```
+
+If everything goes right, the Gateway status should be `True`
+
+```bash
+
+vagrant@k8ssingle1:~$ k get gateway -n samplegw test-gw3 -o json |jq .status.conditions
+[
+  {
+    "lastTransitionTime": "2026-05-15T00:05:13Z",
+    "message": "The Gateway has been scheduled by Envoy Gateway",
+    "observedGeneration": 1,
+    "reason": "Accepted",
+    "status": "True",
+    "type": "Accepted"
+  },
+  {
+    "lastTransitionTime": "2026-05-15T00:05:13Z",
+    "message": "Address assigned to the Gateway, 1/1 envoy replicas available",
+    "observedGeneration": 1,
+    "reason": "Programmed",
+    "status": "True",
+    "type": "Programmed"
+  }
+]
+
+```
