@@ -30,7 +30,7 @@ helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
 
 echo "untainting the node before install"
 
-kubectl taint node k8scilium1 node-role.kubernetes.io/control-plane:NoSchedule-
+kubectl taint node k8ssingle3 node-role.kubernetes.io/control-plane:NoSchedule-
 
 # install cilium
 echo "Installing Cilium"
@@ -53,7 +53,7 @@ helm upgrade cilium cilium/cilium \
     --install \
     --namespace kube-system \
     --reuse-values \
-    --version "1.19.3" \
+    --version "1.18.10" \
     --set kubeProxyReplacement=true \
     --set gatewayAPI.enabled=true \
     --set hubble.enabled=true \
@@ -73,13 +73,10 @@ kubectl -n kube-system rollout restart ds/cilium
 kubectl -n kube-system scale --replicas=0 deployment/cilium-operator
 kubectl -n kube-system scale --replicas=1 deployment/cilium-operator
 
-echo "Creating folder for seccomp config"
-sudo mkdir -p /var/lib/kubelet/seccomp/profiles
+# echo "Installing Envoy Gateway"
 
-echo "Installing Envoy Gateway"
-
-helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.7.3 \
-  -n envoy-gateway-system \
-  --create-namespace \
-  --skip-crds
+# helm install eg oci://docker.io/envoyproxy/gateway-helm \
+#   --version v1.7.2 \
+#   -n envoy-gateway-system \
+#   --create-namespace \
+#   --skip-crds

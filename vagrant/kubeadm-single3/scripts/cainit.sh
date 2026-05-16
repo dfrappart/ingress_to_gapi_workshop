@@ -2,43 +2,43 @@
 
 # Generate CA Key
 
-openssl genrsa -out ciliumsingle-ca.key 4096
+openssl genrsa -out k8ssingle3-ca.key 4096
 
 # Generate CA Certificate
 
 openssl req -x509 -new -nodes \
-  -key ciliumsingle-ca.key \
+  -key k8ssingle3-ca.key \
   -sha256 \
   -days 3650 \
-  -out ciliumsingle-ca.crt \
-  -subj "/C=Fr/O=Dfitc/CN=CiliumSingle-CA"
+  -out k8ssingle3-ca.crt \
+  -subj "/C=Fr/O=Dfitc/CN=k8ssingle3-CA"
 
-# Create ciliumsingle Private Key
+# Create k8ssingle3 Private Key
 
-openssl genrsa -out ciliumsingle.key 4096
+openssl genrsa -out k8ssingle3.key 4096
 
 # Generate CSR
 
 openssl req -new \
-  -key ciliumsingle.key \
-  -out ciliumsingle.csr \
-  -config ciliumsingle-openssl.cnf
+  -key k8ssingle3.key \
+  -out k8ssingle3.csr \
+  -config k8ssingle3-openssl.cnf
 
 # Sign Certificate with CA
 
 openssl x509 -req \
-  -in ciliumsingle.csr \
-  -CA ciliumsingle-ca.crt \
-  -CAkey ciliumsingle-ca.key \
+  -in k8ssingle3.csr \
+  -CA k8ssingle3-ca.crt \
+  -CAkey k8ssingle3-ca.key \
   -CAcreateserial \
-  -out ciliumsingle.crt \
+  -out k8ssingle3.crt \
   -days 825 \
   -sha256 \
   -extensions req_ext \
-  -extfile ciliumsingle-openssl.cnf
+  -extfile k8ssingle3-openssl.cnf
 
 
   
   # Clean up
 
-  mv ciliumsingle.crt ciliumsingle.key ciliumsingle-ca.crt ciliumsingle-ca.key ciliumsingle.csr ciliumsingle-ca.srl ../cert
+  mv k8ssingle3.crt k8ssingle3.key k8ssingle3-ca.crt k8ssingle3-ca.key k8ssingle3.csr k8ssingle3-ca.srl ../cert

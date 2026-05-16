@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: gundam-listenerset
+  namespace: gundam
+spec:
+  parentRef:
+    namespace: shared-gw
+    name: shared-gw-tls
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  listeners:
+  - name: first
+    hostname: k8ssingle2
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: gundamapp-tls

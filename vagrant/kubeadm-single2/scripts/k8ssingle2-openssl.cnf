@@ -1,4 +1,4 @@
-# k8scalico1-openssl.cnf
+# k8ssingle2-openssl.cnf
 [ req ]
 default_bits       = 4096
 prompt             = no
@@ -9,12 +9,12 @@ distinguished_name = dn
 [ dn ]
 C  = Fr
 O  = dfitc
-CN = k8scalico1.app.teknews.cloud
+CN = k8ssingle2.app.teknews.cloud
 
 [ req_ext ]
 subjectAltName = @alt_names
 
 [ alt_names ]
-DNS.1 = k8scalico1.app.teknews.cloud
-DNS.2 = k8scalico1
+DNS.1 = k8ssingle2.app.teknews.cloud
+DNS.2 = k8ssingle2
 IP.1  = 192.168.56.16

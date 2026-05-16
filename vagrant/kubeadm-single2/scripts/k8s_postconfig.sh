@@ -42,12 +42,12 @@ kubectl apply -f ./custom-resources.yaml
 
 echo "untainting the node before install"
 
-kubectl taint node k8scalico1 node-role.kubernetes.io/control-plane:NoSchedule-
+kubectl taint node k8ssingle2 node-role.kubernetes.io/control-plane:NoSchedule-
 
 echo "Installing Envoy Gateway CRDs"
 
 helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
-  --version v1.7.3 \
+  --version v1.8.0 \
   --set crds.gatewayAPI.enabled=false \
   --set crds.envoyGateway.enabled=true \
   | kubectl apply --server-side -f -
@@ -55,7 +55,7 @@ helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
 echo "Installing Envoy Gateway"
 
 helm install eg oci://docker.io/envoyproxy/gateway-helm \
-  --version v1.7.3 \
+  --version v1.8.0 \
   -n envoy-gateway-system \
   --create-namespace \
   --skip-crds

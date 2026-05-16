@@ -8,17 +8,15 @@ status: {}
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
-  name: allow-ciliumgateway-to-ref-secrets
+  name: allow-shared-gw-to-ref-secrets
   namespace: certificates
 spec:
   from:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    namespace: ciliumgateway
+    namespace: shared-gw
   to:
   - group: ""
-    kind: Secret           
----    
-# Create Secret for TLS certs
-# k create secret tls k8scilium1tls --key <path_to_key> --cert <path_to_cert> -n certificates --dry-run=client -o yaml
+    kind: Secret    
 
+# kubectl create secret tls gundamapp-tls --namespace certificates --key <path_to_key_file> --cert <path_to_cert_file>

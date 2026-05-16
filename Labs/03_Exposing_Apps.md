@@ -173,7 +173,7 @@ Ok that was the easy part. Now to expose the apps, we'll use the `HTTPRoute`.
 
 ### 2.1. HTTProute basics
 
-Exposing an application is done with the http route. Details on this api object are available on the [gateway api documentation](https://gateway-api.sigs.k8s.io/reference/spec/#httproute).
+Exposing an application is done with the `HTTPRoute`. Details on this api object are available on the [gateway api documentation](https://gateway-api.sigs.k8s.io/reference/spec/#httproute).
 
 A simple HTTPRoute configuration is as simple as what we have below.
 
@@ -326,7 +326,7 @@ But the really interesting part here, is the annotation `nginx.ingress.kubernete
 
 Ok time to try this with the httproute.
 
-We want to expose, let's say, the barbatos apps to our http route, so we add an additional rule in the `spec.rules` section : 
+We want to expose, let's say, the barbatos apps to our `HTTPRoute`, so we add an additional rule in the `spec.rules` section : 
 
 ```yaml
 
@@ -405,7 +405,7 @@ Specifically, we can use the `URLRewrite` type
 And then specify the appropriate properties to modify the path:
 
 - a `type`, which accept ReplaceFullPath and ReplacePrefixMatch
-- the `replacePrefixMatch` which in this case will be `/` to replace the prefix on the http route with the `/` path on the container.
+- the `replacePrefixMatch` which in this case will be `/` to replace the prefix on the `HTTPRoute` with the `/` path on the container.
 
 Now we can update the `HTTPRoute`.
 
@@ -474,7 +474,7 @@ For now, we want to see if we can manage traffic weight.
 ### 2.3. Managing weight
 
 
-The http route has a native capability of weight management. 
+The `HTTPRoute` has a native capability of weight management. 
 
 Again, from the documentation, we can find the spec.rules.backendRefs.weight:
 
@@ -482,7 +482,7 @@ Again, from the documentation, we can find the spec.rules.backendRefs.weight:
 |-|-|-|-|
 | `weight` | Weight specifies the proportion of requests forwarded to the referenced backend. This is computed as weight/(sum of all weights in this BackendRefs list). | 1 | Max 1e+06 </br> Min 0 |
 
-Transposed in an http route, it looks like this:
+Transposed in an `HTTPRoute`, it looks like this:
 
 ```yaml
 
@@ -552,3 +552,225 @@ Now we'll have a look at the TLS management.
 
 ## 3. TLS management basics
 
+### 2.1. TLS considerations with Gateway API
+
+For this section, no surprise, we will again rely on the gateway api [documentation](https://gateway-api.sigs.k8s.io/guides/tls/) &#128518;.
+
+We need to consider the traffic from the gateway point of view. Taking this into account, we have 2 parts:
+
+- The downstream connection, happening between the client and the gateway itself.
+- The upstream connection, happening between the gateway and the backend service (most of the time)
+
+![illustration3](/assets/gatewayupstreamdownstream.png)
+
+Considering this, the gateway api objects available to manage TLS connectivity may answer to different scenario. With the `HTTPRoute` that we will work with today, we are limited to a TLS termination on the gateway, as opposite to a TLS passthrough. We'll note that it does not mean the traffic has to go on unencrypted after the `HTTPRoute`.
+
+The table below  summarize the different available scenarios depending on the object used.
+
+| Listener protocol | TLS mode | Route Type supported |
+|-|-|-|
+| TLS | Passthrough | TLS Route |
+| TLS | Terminate | TCPRoute |
+| HTTPS | Terminate | HTTPRoute |
+| gRPC | Terminate | GRPCRoute |
+
+As mentioned, in the next part, we'll focus on the TLS scenario with `HTTPRoute`.
+
+### 2.2. Configuring TLS
+
+To configure TLS, we have to act first at the gateway level. Which make sense, since we mention a 2 way connection, the upstream and the downstream.
+
+searching in the documentation, we can find information for the `spec.listeners.tls` section:
+
+| Field	| Description	| Default	| Validation |
+|-|-|-|-|
+| `mode` | Mode defines the TLS behavior for the TLS session initiated by the client. There are two possible modes:</br>- Terminate: The TLS session between the downstream client and the Gateway is terminated at the Gateway. This mode requires certificates to be specified in some way, such as populating the certificateRefs field. </br>- Passthrough: The TLS session is NOT terminated by the Gateway. This implies that the Gateway can't decipher the TLS stream except for the ClientHello message of the TLS protocol. The certificateRefs field is ignored in this mode.|Terminate	| Enum: [Terminate Passthrough] |
+| `certificateRefs` array	| CertificateRefs contains a series of references to Kubernetes objects that contains TLS certificates and private keys. </br>These certificates are used to establish a TLS handshake for requests that match the hostname of the associated listener. </br>A single CertificateRef to a Kubernetes Secret has "Core" support. </br>Implementations MAY choose to support attaching multiple certificates to a Listener, but this behavior is implementation-specific. </br>References to a resource in different namespace are invalid UNLESS there is a ReferenceGrant in the target namespace that allows the certificate to be attached.</br> If a ReferenceGrant does not allow this reference, the "ResolvedRefs" condition MUST be set to False for this listener with the "RefNotPermitted" reason. </br>This field is required to have at least one element when the mode is set to "Terminate" (default) and is optional otherwise. </br>CertificateRefs can reference to standard Kubernetes resources, i.e. Secret, or implementation-specific custom resources. |	|	MaxItems: 64 |
+
+And the child object `spec.listerners.tls.certificateRefs`
+
+| Field	| Description	| Default	| Validation |
+|-|-|-|-|
+| `group`	| Group is the group of the referent. For example, "gateway.networking.k8s.io". When unspecified or empty string, core API group is inferred. |  | MaxLength: 253 </br>Pattern: ^$\|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ |
+| `kind` 	| Kind is kind of the referent. For example "Secret".	| Secret	| MaxLength: 63 </br> MinLength: 1 </br>Pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+| `name` 	| Name is the name of the referent.	| | | MaxLength: 253 </br> MinLength: 1
+| `namespace` 	| Namespace is the namespace of the referenced object. When unspecified, the local namespace is inferred. </br> Note that when a namespace different than the local namespace is specified, a ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. | |	MaxLength: 63</br> MinLength: 1 </br> Pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ |
+
+Which allow us to write a gateway configuration as below (with a secret, because at this point we still need a secret &#128541;).
+
+```yaml
+
+apiVersion: v1
+data:
+  tls.crt: LS0tLS1--hidden
+  tls.key: LS0tLS1--hidden
+  kind: Secret
+metadata:
+  name: apptekewscloud
+  namespace: gundam
+type: kubernetes.io/tls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gundam-tls-gw
+  namespace: gundam
+spec:
+  gatewayClassName: cilium
+  listeners:
+  - protocol: HTTPS
+    port: 443
+    name: gundam-tls-gw
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: apptekewscloud
+        kind: Secret
+        namespace: gundam
+        group: ""
+    allowedRoutes:
+      namespaces:
+        from: Same    
+
+```
+
+By the way, the secret can be created with a `kubectl` command as below : 
+
+
+```bash
+
+df@df-2404lts:~$ kubectl create secret tls gundamapp-tls --key <path_to_key> --cert <path_to_pem> 
+
+
+```
+
+And about how to manage the certificate creation?
+
+For now, we'll do it manually (by manually I mean not Cert Manager) with a bit of openssl commands.
+
+```bash
+
+#!/bin/sh
+
+# Generate CA Key
+
+openssl genrsa -out k8ssingle1-ca.key 4096
+
+# Generate CA Certificate
+
+openssl req -x509 -new -nodes \
+  -key k8ssingle1-ca.key \
+  -sha256 \
+  -days 3650 \
+  -out k8ssingle1-ca.crt \
+  -subj "/C=Fr/O=Dfitc/CN=k8ssingle1-CA"
+
+# Create k8ssingle1 Private Key
+
+openssl genrsa -out k8ssingle1.key 4096
+
+# Generate CSR
+
+openssl req -new \
+  -key k8ssingle1.key \
+  -out k8ssingle1.csr \
+  -config k8ssingle1-openssl.cnf
+
+# Sign Certificate with CA
+
+openssl x509 -req \
+  -in k8ssingle1.csr \
+  -CA k8ssingle1-ca.crt \
+  -CAkey k8ssingle1-ca.key \
+  -CAcreateserial \
+  -out k8ssingle1.crt \
+  -days 825 \
+  -sha256 \
+  -extensions req_ext \
+  -extfile k8ssingle1-openssl.cnf
+
+```
+
+The .cnf file looks like this.
+
+```bash
+
+# k8ssingle1-openssl.cnf
+[ req ]
+default_bits       = 4096
+prompt             = no
+default_md         = sha256
+req_extensions     = req_ext
+distinguished_name = dn
+
+[ dn ]
+C  = Fr
+O  = dfitc
+CN = k8ssingle1.app.teknews.cloud
+
+[ req_ext ]
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = k8ssingle1.app.teknews.cloud
+DNS.2 = k8ssingle1
+IP.1  = 192.168.56.81
+
+```
+
+So now we have a new Gateway
+
+```bash
+
+df@df-2404lts:~$ k $cal get gateway -n gundam 
+NAME            CLASS            ADDRESS         PROGRAMMED   AGE
+gundam-gw-tls   envoy-nodeport   192.168.56.16   True         23m
+df@df-2404lts:~$ k $cal get gateway -n gundam gundam-gw-tls -o custom-columns=Name:.metadata.name,Namespace:.metadata.namespace,Port:.spec.listeners[0].port,Protocol:.spec.listeners[0].protocol,CertSecretName:.spec.listeners[0].tls.certificateRefs[0].name
+Name            Namespace   Port   Protocol   CertSecretName
+gundam-gw-tls   gundam      443    HTTPS      gundamapp-tls
+
+```
+
+We can then try a curl on the different path available
+
+```bash
+
+df@df-2404lts:~$ curl -k -i -X GET https://k8scalico1:30439/barbatos
+HTTP/2 200 
+server: nginx/1.31.0
+date: Fri, 15 May 2026 21:06:54 GMT
+content-type: text/html
+content-length: 288
+last-modified: Fri, 15 May 2026 20:30:19 GMT
+etag: "6a07825b-120"
+accept-ranges: bytes
+
+<html>
+<h1>Welcome to Gundam App 2</h1>
+</br>
+<h2>This is a demo to illustrate Gateway API </h2>
+<img src="https://imgs.search.brave.com/AfLpq5XX4tK6TtxoWLDbd_665qDaxYgPAJKBCxVl5aE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL0kv/NjFyYkhlLTdCbEwu/anBn" />
+</html>
+
+df@df-2404lts:~$ curl -k -i -X GET https://k8scalico1:30439
+HTTP/2 200 
+server: nginx/1.31.0
+date: Fri, 15 May 2026 21:06:57 GMT
+content-type: text/html
+content-length: 186
+last-modified: Fri, 15 May 2026 20:30:19 GMT
+etag: "6a07825b-ba"
+accept-ranges: bytes
+
+<html>
+<h1>Welcome to Gundam App</h1>
+</br>
+<h2>This is a demo to illustrate Gateway API </h2>
+<img src="https://www.previewsworld.com/SiteImage/FBCatalogImage/STL205689.jpg" />
+</html>
+
+```
+
+Ok great, So basic TLS is working fine.
+
+Now we want to connect the dot with the role oriented model and think about shared resource, and responsibilities.

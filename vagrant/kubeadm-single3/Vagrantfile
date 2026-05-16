@@ -13,7 +13,6 @@ Vagrant.configure("2") do |config|
       k8sservers.vm.provision "shell", privileged: true,  path: "scripts/k8s_install.sh"
       k8sservers.vm.provision "file", source: "scripts/k8s_postconfig.sh", destination: "/home/vagrant/k8s_postconfig.sh"
       k8sservers.vm.provision "file", source: "../yamlconfig/", destination: "/home/vagrant/"
-      k8sservers.vm.provision "file", source: "seccompprofiles/", destination: "/home/vagrant/"
       
     end
   end
