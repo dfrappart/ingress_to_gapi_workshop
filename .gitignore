@@ -9,3 +9,4 @@ terraform.tfstate.backup
 *.pem
 Thumbs.db*
 cert/
+.DS_Store
