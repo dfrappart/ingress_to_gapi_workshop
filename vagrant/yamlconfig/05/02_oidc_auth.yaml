@@ -1,0 +1,21 @@
+#k create secret generic envoy-app-client-secret -n gundamcustom --from-literal=client-secret=<secret_value> -o yaml --dry-run=client
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: oidc-envoy-app1-security-policy
+  namespace: gundamcustom
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: gundam-httproute-with-shared-gw
+  oidc:
+    provider:
+      issuer: "https://login.microsoftonline.com/<tenant_id_guid>/v2.0"
+    clientID: "app_id_guid"
+    clientSecret:
+      name: "envoy-app-client-secret"
+    redirectURL: "https://cndromania.app.teknews.cloud/oauth2/callback"
+    logoutPath: "/logout"
+---

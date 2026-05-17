@@ -191,7 +191,7 @@ spec:
   - name: gundam-gw
   hostnames:
   #- "gundam.app.teknews.cloud"
-  - "k8scalico1"
+  - "k8ssingle1"
   rules:
   - backendRefs:
     - name: gundamappsvc
@@ -552,7 +552,7 @@ Now we'll have a look at the TLS management.
 
 ## 3. TLS management basics
 
-### 2.1. TLS considerations with Gateway API
+### 3.1. TLS considerations with Gateway API
 
 For this section, no surprise, we will again rely on the gateway api [documentation](https://gateway-api.sigs.k8s.io/guides/tls/) &#128518;.
 
@@ -576,7 +576,7 @@ The table below  summarize the different available scenarios depending on the ob
 
 As mentioned, in the next part, we'll focus on the TLS scenario with `HTTPRoute`.
 
-### 2.2. Configuring TLS
+### 3.2. Configuring TLS
 
 To configure TLS, we have to act first at the gateway level. Which make sense, since we mention a 2 way connection, the upstream and the downstream.
 
@@ -773,4 +773,4 @@ accept-ranges: bytes
 
 Ok great, So basic TLS is working fine.
 
-Now we want to connect the dot with the role oriented model and think about shared resource, and responsibilities.
+Now we want to connect the dots with the role oriented model and think about shared resource, and responsibilities.

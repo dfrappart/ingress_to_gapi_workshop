@@ -1,0 +1,254 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gundamcustom
+spec: {}
+status: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-barbatos
+ namespace: gundamcustom
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to Gundam App 2</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API </h2>
+   <img src="https://imgs.search.brave.com/AfLpq5XX4tK6TtxoWLDbd_665qDaxYgPAJKBCxVl5aE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tLm1l/ZGlhLWFtYXpvbi5j/b20vaW1hZ2VzL0kv/NjFyYkhlLTdCbEwu/anBn" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: barbatos
+  name: barbatos
+  namespace: gundamcustom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: barbatos
+  template:
+    metadata:
+      labels:
+        app: barbatos
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-barbatos
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: gundamcustom
+  name: barbatossvc
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8090
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: barbatos    
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-gundam
+ namespace: gundamcustom
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to Gundam App</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API </h2>
+   <img src="https://www.previewsworld.com/SiteImage/FBCatalogImage/STL205689.jpg" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gundamapp
+  name: gundamapp
+  namespace: gundamcustom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gundamapp
+  template:
+    metadata:
+      labels:
+        app: gundamapp
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-gundam
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: gundamcustom
+  name: gundamappsvc
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: gundamapp    
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: internallb-proxy
+  namespace: envoy-gateway-system
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-internallb
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: internallb-proxy
+    namespace: envoy-gateway-system
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy-externalb
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: certificates
+spec: {}
+status: {}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-shared-gw-to-ref-secrets
+  namespace: certificates
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: shared-gw
+  to:
+  - group: ""
+    kind: Secret    
+# kubectl create secret tls gundamapp-tls --namespace certificates --key <path_to_key_file> --cert <path_to_cert_file>
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shared-gw
+spec: {}
+status: {}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gw-tls
+  namespace: shared-gw
+spec:
+  gatewayClassName: envoy-externalb
+  listeners:
+  - protocol: HTTPS
+    port: 443
+    name: shared-gw-tls
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [gundamcustom,demoapp] }
+    tls:
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: gundamapp-tls
+        namespace: certificates
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundam-httproute-with-shared-gw
+  namespace: gundamcustom
+spec:
+  parentRefs:
+  - name: shared-gw-tls
+    namespace: shared-gw
+  hostnames:
+  - "cndromania.app.teknews.cloud"
+  rules:
+  - backendRefs:
+    - name: gundamappsvc
+      port: 8080
+      kind: Service
+  - backendRefs:
+    - name: barbatossvc
+      port: 8090
+      kind: Service
+    matches:
+    - path:
+        type: PathPrefix
+        value: /barbatos
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /        

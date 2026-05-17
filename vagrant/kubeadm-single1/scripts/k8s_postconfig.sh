@@ -56,7 +56,7 @@ helm upgrade cilium cilium/cilium \
     --reuse-values \
     --version "1.18.10" \
     --set kubeProxyReplacement=true \
-    --set gatewayAPI.enabled=false \
+    --set gatewayAPI.enabled=true \
     --set hubble.enabled=true \
     --set hubble.relay.enabled=true \
     --set hubble.ui.enabled=true \

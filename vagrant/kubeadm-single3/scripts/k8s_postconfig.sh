@@ -22,7 +22,7 @@ echo "complete -F __start_kubectl k" >> $HOME/.bashrc
 echo "Installing Gateway API CRDs"
 
 helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
-  --version v1.7.2 \
+  --version v1.8.0 \
   --set crds.gatewayAPI.enabled=true \
   --set crds.gatewayAPI.channel=standard \
   --set crds.envoyGateway.enabled=true \
@@ -53,7 +53,7 @@ helm upgrade cilium cilium/cilium \
     --install \
     --namespace kube-system \
     --reuse-values \
-    --version "1.18.10" \
+    --version "1.19.4" \
     --set kubeProxyReplacement=true \
     --set gatewayAPI.enabled=true \
     --set hubble.enabled=true \

@@ -1,12 +1,78 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gw-tls-listenerset
+  namespace: shared-gw
+spec:
+  gatewayClassName: envoy-nodeport
+  allowedListeners:
+    namespaces:
+      from: Selector
+      selector:
+        matchExpressions:
+        - { key: kubernetes.io/metadata.name, operator: In, values: [shared-gw,gundam,demoapp] }
+  listeners:
+  - name: shared-gw-tls-listenerset
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
+#    tls:
+#     certificateRefs:
+#     - kind: Secret
+#       group: ""
+#       name: gundamapp-tls
+#       namespace: certificates
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundam-httproute-with-listenerset
+  namespace: gundam
+spec:
+  parentRefs:
+  - name: shared-gw-tls-listenerset
+    kind: ListenerSet
+    group: gateway.networking.k8s.io
+  hostnames:
+  #- "gundam.app.teknews.cloud"
+  #- "k8ssingle1"
+  - "k8ssingle2"
+  #- "k8ssingle3"
+  rules:
+  - backendRefs:
+    - name: gundamappsvc
+      port: 8080
+      kind: Service
+  - backendRefs:
+    - name: barbatossvc
+      port: 8090
+      kind: Service
+    matches:
+    - path:
+        type: PathPrefix
+        value: /barbatos
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: ListenerSet
 metadata:
   name: gundam-listenerset
-  namespace: gundam
+  namespace: shared-gw
 spec:
   parentRef:
     namespace: shared-gw
-    name: shared-gw-tls
+    name: shared-gw-tls-listenerset
     kind: Gateway
     group: gateway.networking.k8s.io
   listeners:

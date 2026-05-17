@@ -19,9 +19,9 @@ echo "complete -F __start_kubectl k" >> $HOME/.bashrc
 
 # install gateway api prereq
 
-echo "Installing Gateway API CRDs"
-
-kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/monthly-2026.05/monthly-2026.05-install.yaml
+#echo "Installing Gateway API CRDs"
+#
+#kubectl apply --server-side=true -f https://github.com/kubernetes-sigs/gateway-api/releases/download/monthly-2026.05/monthly-2026.05-install.yaml
 
 echo "Installing calico API CRDs"
 
@@ -48,7 +48,7 @@ echo "Installing Envoy Gateway CRDs"
 
 helm template eg oci://docker.io/envoyproxy/gateway-crds-helm \
   --version v1.8.0 \
-  --set crds.gatewayAPI.enabled=false \
+  --set crds.gatewayAPI.enabled=true \
   --set crds.envoyGateway.enabled=true \
   | kubectl apply --server-side -f -
   

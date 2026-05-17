@@ -1,17 +1,14 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: gundam-httproute-with-shared-gw
-  namespace: gundam
+  name: gundam-httproute-ratelimiting
+  namespace: gundamcustom
 spec:
   parentRefs:
   - name: shared-gw-tls
     namespace: shared-gw
   hostnames:
-  #- "gundam.app.teknews.cloud"
-  #- "k8ssingle1"
-  - "k8ssingle2"
-  #- "k8ssingle3"
+  - "cndromania2.app.teknews.cloud"
   rules:
   - backendRefs:
     - name: gundamappsvc
@@ -30,4 +27,21 @@ spec:
       urlRewrite:
         path:
           type: ReplacePrefixMatch
-          replacePrefixMatch: /
+          replacePrefixMatch: /        
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: policy-httproute
+  namespace: gundamcustom
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: gundam-httproute-ratelimiting
+  rateLimit:
+    global:
+      rules:
+      - limit:
+          requests: 10
+          unit: Hour
