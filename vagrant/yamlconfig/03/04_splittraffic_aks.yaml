@@ -137,7 +137,7 @@ metadata:
   name: gundamsplit-gw
   namespace: gundam
 spec:
-  gatewayClassName: envoy-nodeport
+  gatewayClassName: envoy
   listeners:
   - protocol: HTTP
     port: 80
@@ -155,9 +155,7 @@ spec:
   parentRefs:
   - name: gundamsplit-gw
   hostnames:
-    - "k8ssingle1"
-  #- "k8ssingle2"
-  #- "k8ssingle3"
+  - "gundamsplit.app.teknews.cloud"
   rules:
   - backendRefs:
     - kind: Service

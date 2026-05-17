@@ -15,3 +15,5 @@ metadata:
 spec:
   ipAddressPools:
   - first-pool
+  interfaces: 
+  - eth1  # Remplacez par l'interface réseau de votre VM

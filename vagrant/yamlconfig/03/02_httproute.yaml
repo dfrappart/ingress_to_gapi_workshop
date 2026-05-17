@@ -22,8 +22,9 @@ spec:
   parentRefs:
   - name: gundam-gw
   hostnames:
-  #- "gundam.app.teknews.cloud"
-  - "k8scalico1"
+  - "k8ssingle1"
+  #- "k8ssingle2"
+  #- "k8ssingle3"
   rules:
   - backendRefs:
     - name: gundamappsvc

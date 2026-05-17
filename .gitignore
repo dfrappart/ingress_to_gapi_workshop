@@ -7,3 +7,4 @@ terraform.tfstate.backup
 *.log
 /cert
 *.pem
+Thumbs.db*

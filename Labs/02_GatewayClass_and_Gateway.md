@@ -89,6 +89,26 @@ annotations:
 
 ```
 
+On the Ingress object, it would be specified as below.
+
+```yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: another-nginx
+  namespace: ingressapp-demo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    #nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+========truncated==========
+
+```
+
 We'll keep that in mind.
 
 Ok, now back to the Gateway API.
