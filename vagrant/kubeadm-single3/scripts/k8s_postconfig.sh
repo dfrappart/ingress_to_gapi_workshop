@@ -49,15 +49,16 @@ helm repo update
 
 echo "Installing Cilium with Helm"
 
-helm upgrade cilium cilium/cilium \
+helm upgrade cilium oci://quay.io/cilium/charts/cilium \
     --install \
     --namespace kube-system \
     --reuse-values \
-    --version "1.19.4" \
+    --version " 1.20.0-pre.2" \
     --set kubeProxyReplacement=true \
     --set gatewayAPI.enabled=true \
     --set hubble.enabled=true \
     --set hubble.relay.enabled=true \
+    --set hubble.relay.tls.server.enabled=true \
     --set hubble.ui.enabled=true \
     --set k8sServiceHost=${API_SERVER_IP} \
     --set k8sServicePort=${API_SERVER_PORT} \

@@ -17,5 +17,12 @@ subjectAltName = @alt_names
 [ alt_names ]
 DNS.1 = k8ssingle3.app.teknews.cloud
 DNS.2 = k8ssingle3
-DNS.3 = gundamapp
+DNS.3 = app1
+DNS.4 = app2
+DNS.5 = app3
+DNS.6 = app4
 IP.1  = 192.168.56.83
+IP.2  = 192.168.56.111
+IP.3  = 192.168.56.112
+IP.4  = 192.168.56.113
+IP.5  = 192.168.56.114

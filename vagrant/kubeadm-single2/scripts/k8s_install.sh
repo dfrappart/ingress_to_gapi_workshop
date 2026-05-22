@@ -1,9 +1,29 @@
 #!/bin/sh
 
+# Add Ip to eth1
+echo "      - 192.168.56.121/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.122/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.123/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.124/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.125/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.126/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.127/24" >> /etc/netplan/50-vagrant.yaml
+echo "      - 192.168.56.128/24" >> /etc/netplan/50-vagrant.yaml
+
+netplan apply
+
 # Add current node in  /etc/hosts
 echo "Adding current node in /etc/hosts"
 echo "127.0.1.1 $(hostname)" >> /etc/hosts
 echo "192.168.56.82 $(hostname)" >> /etc/hosts
+echo "192.168.56.121 app1" >> /etc/hosts
+echo "192.168.56.122 app2" >> /etc/hosts
+echo "192.168.56.123 app3" >> /etc/hosts
+echo "192.168.56.124 app4" >> /etc/hosts
+echo "192.168.56.125 app5" >> /etc/hosts
+echo "192.168.56.126 app6" >> /etc/hosts
+echo "192.168.56.127 app7" >> /etc/hosts
+echo "192.168.56.128 app8" >> /etc/hosts
 
 # Install prerequisite
 echo "apt config"
