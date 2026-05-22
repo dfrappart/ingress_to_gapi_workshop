@@ -1,0 +1,24 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gw-tls-listenerset-envoy
+  namespace: shared-gw
+spec:
+  gatewayClassName: envoy-nodeport
+  allowedListeners:
+    namespaces:
+      from: Selector
+      selector:
+        matchExpressions:
+        - { key: kubernetes.io/metadata.name, operator: In, values: [shared-gw,gundam,demoapp] }
+  listeners:
+  - name: shared-gw-tls-listenerset
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchExpressions:
+          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }

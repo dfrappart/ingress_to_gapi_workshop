@@ -10,8 +10,8 @@ spec:
   hostnames:
   #- "gundam.app.teknews.cloud"
   #- "k8ssingle1"
-  - "k8ssingle2"
-  #- "k8ssingle3"
+  #- "k8ssingle2"
+  - "k8ssingle3"
   rules:
   - backendRefs:
     - name: gundamappsvc

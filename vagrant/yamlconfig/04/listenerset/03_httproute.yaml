@@ -1,0 +1,64 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundam-httproute-with-listenerset-envoy
+  namespace: gundam
+spec:
+  parentRefs:
+  - name: shared-gw-tls-listenerset-envoy
+    kind: ListenerSet
+    group: gateway.networking.k8s.io
+  hostnames:
+  - k8ssingle3
+  rules:
+  - backendRefs:
+    - name: gundamappsvc
+      port: 8080
+      kind: Service
+  - backendRefs:
+    - name: barbatossvc
+      port: 8090
+      kind: Service
+    matches:
+    - path:
+        type: PathPrefix
+        value: /barbatos
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gundam-httproute-with-listenerset-nginx
+  namespace: gundam
+spec:
+  parentRefs:
+  - name: shared-gw-tls-listenerset-nginx
+    kind: ListenerSet
+    group: gateway.networking.k8s.io
+  hostnames:
+  - k8ssingle3
+  rules:
+  - backendRefs:
+    - name: gundamappsvc
+      port: 8080
+      kind: Service
+  - backendRefs:
+    - name: barbatossvc
+      port: 8090
+      kind: Service
+    matches:
+    - path:
+        type: PathPrefix
+        value: /barbatos
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /
