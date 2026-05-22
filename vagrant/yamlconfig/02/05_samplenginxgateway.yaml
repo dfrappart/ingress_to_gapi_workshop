@@ -1,0 +1,69 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: nginx-custom
+spec:
+  controllerName: gateway.nginx.org/nginx-gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-gw-nginx-custom
+  namespace: samplegw
+spec:
+  gatewayClassName: nginx-custom
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: test-gw-nginx-custom
+    allowedRoutes:
+      namespaces:
+        from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: test-gw-nginx
+  namespace: samplegw
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - protocol: HTTP
+    port: 80
+    name: test-gw-nginx
+    allowedRoutes:
+      namespaces:
+        from: All     
+---
+# The default nginx gateway class use a NginxProxy CRD to configure the underlying service as a NodePort
+# apiVersion: gateway.nginx.org/v1alpha2
+# kind: NginxProxy
+# metadata:
+#   annotations:
+#     meta.helm.sh/release-name: ngf
+#     meta.helm.sh/release-namespace: nginx-gateway
+#   creationTimestamp: "2026-05-21T14:50:10Z"
+#   generation: 1
+#   labels:
+#     app.kubernetes.io/instance: ngf
+#     app.kubernetes.io/managed-by: Helm
+#     app.kubernetes.io/name: nginx-gateway-fabric
+#     app.kubernetes.io/version: 2.6.1
+#     helm.sh/chart: nginx-gateway-fabric-2.6.1
+#   name: ngf-proxy-config
+#   namespace: nginx-gateway
+#   resourceVersion: "51538"
+#   uid: f98861c0-4b18-4f6e-ae1a-af72fa6ec15e
+# spec:
+#   ipFamily: dual
+#   kubernetes:
+#     deployment:
+#       container:
+#         image:
+#           pullPolicy: IfNotPresent
+#           repository: ghcr.io/nginx/nginx-gateway-fabric/nginx
+#           tag: 2.6.1
+#       replicas: 1
+#     service:
+#       externalTrafficPolicy: Local
+#       type: NodePort   

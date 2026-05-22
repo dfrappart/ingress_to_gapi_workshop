@@ -5,7 +5,7 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  - 192.168.56.121-192.168.56.130  # Remplacez par votre plage d'IPs
+  - 192.168.56.121-192.168.56.130 
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
@@ -16,4 +16,4 @@ spec:
   ipAddressPools:
   - first-pool
   interfaces: 
-  - eth1  # Remplacez par l'interface réseau de votre VM
+  - eth1

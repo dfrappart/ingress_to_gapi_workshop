@@ -1,4 +1,4 @@
-
+# Install Metal LB first and vertify that the IP addresses from the pool are assigned to the correct NIC.
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -13,4 +13,4 @@ spec:
     name: test-gw
     allowedRoutes:
       namespaces:
-        from: Same 
+        from: All #use Same to only allow route from the same namespace 

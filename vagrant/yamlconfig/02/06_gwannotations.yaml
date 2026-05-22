@@ -1,17 +1,18 @@
+# Pass anotations to the underlying service of the Gateway with the spec.infrastructure.annotations field. This example shows how to create an internal load balancer in Azure by adding the "service.beta.kubernetes.io/azure-load-balancer-internal" annotation to the Gateway.
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: gw-annotated
   namespace: samplegw
 spec:
-  gatewayClassName: envoy
+  gatewayClassName: cilium
   infrastructure:
     annotations:
       "service.beta.kubernetes.io/azure-load-balancer-internal": "true"
   listeners:
   - allowedRoutes:
       namespaces:
-        from: Same
+        from: All
     name: gw-annotated
     port: 80
     protocol: HTTP

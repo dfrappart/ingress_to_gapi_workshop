@@ -8,14 +8,14 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: test-envoygw
+  name: test-gw-envoy
   namespace: samplegw
 spec:
   gatewayClassName: envoy
   listeners:
   - protocol: HTTP
     port: 80
-    name: test-envoygw
+    name: test-gw-envoy
     allowedRoutes:
       namespaces:
-        from: Same            
+        from: All            
