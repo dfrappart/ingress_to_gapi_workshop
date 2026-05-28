@@ -1,0 +1,30 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: ListenerSet
+metadata:
+  name: gundam-listenerset-nginx
+  namespace: gundam
+spec:
+  parentRef:
+    namespace: shared-gw
+    name: shared-gw-tls-listenerset-nginx
+    kind: Gateway
+    group: gateway.networking.k8s.io
+  listeners:
+  - name: first
+    hostname: cndromania.app.teknews.cloud
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: gundamapp-tls2
+        namespace: gundam
+    allowedRoutes:
+      namespaces:
+        from : Same
+        #from: Selector
+        #selector:
+        #  matchExpressions:
+        #  - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }

@@ -14,11 +14,18 @@ spec:
         - { key: kubernetes.io/metadata.name, operator: In, values: [shared-gw,gundam,demoapp] }
   listeners:
   - name: shared-gw-tls-listenerset-nginx
-    protocol: HTTP
-    port: 80
+    protocol: HTTPS
+    port: 443
     allowedRoutes:
       namespaces:
         from: Selector
         selector:
           matchExpressions:
           - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        group: ""
+        name: gundamapp-tls
+        namespace: certificates

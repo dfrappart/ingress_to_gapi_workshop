@@ -53,7 +53,7 @@ helm upgrade cilium oci://quay.io/cilium/charts/cilium \
     --install \
     --namespace kube-system \
     --reuse-values \
-    --version " 1.20.0-pre.2" \
+    --version "1.20.0-pre.2" \
     --set kubeProxyReplacement=true \
     --set gatewayAPI.enabled=true \
     --set hubble.enabled=true \

@@ -17,3 +17,4 @@ subjectAltName = @alt_names
 [ alt_names ]
 DNS.1 = cndromania.app.teknews.cloud
 DNS.2 = cndromania
+DNS.3 = app1.app.teknews.cloud

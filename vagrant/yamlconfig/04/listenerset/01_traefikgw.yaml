@@ -22,3 +22,4 @@ spec:
         selector:
           matchExpressions:
           - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
+          
