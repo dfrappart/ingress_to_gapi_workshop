@@ -16,14 +16,14 @@ netplan apply
 echo "Adding current node in /etc/hosts"
 echo "127.0.1.1 $(hostname)" >> /etc/hosts
 echo "192.168.56.82 $(hostname)" >> /etc/hosts
-echo "192.168.56.121 app1" >> /etc/hosts
-echo "192.168.56.122 app2" >> /etc/hosts
-echo "192.168.56.123 app3" >> /etc/hosts
-echo "192.168.56.124 app4" >> /etc/hosts
-echo "192.168.56.125 app5" >> /etc/hosts
-echo "192.168.56.126 app6" >> /etc/hosts
-echo "192.168.56.127 app7" >> /etc/hosts
-echo "192.168.56.128 app8" >> /etc/hosts
+echo "192.168.56.121 app11" >> /etc/hosts
+echo "192.168.56.122 app12" >> /etc/hosts
+echo "192.168.56.123 app13" >> /etc/hosts
+echo "192.168.56.124 app14" >> /etc/hosts
+echo "192.168.56.125 app15" >> /etc/hosts
+echo "192.168.56.126 app16" >> /etc/hosts
+echo "192.168.56.127 app17" >> /etc/hosts
+echo "192.168.56.128 app18" >> /etc/hosts
 
 # Install prerequisite
 echo "apt config"
