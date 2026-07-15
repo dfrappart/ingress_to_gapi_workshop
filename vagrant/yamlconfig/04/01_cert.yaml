@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: certificates
+  labels:
+    name: certificates
+    env: dev
 spec: {}
 status: {}
 ---

@@ -20,13 +20,13 @@ metadata:
   namespace: gundam
 spec:
   parentRefs:
-  - name: test-gw-traefik
-    namespace: samplegw
+  - name: gundam-gw
+    namespace: gundam
   hostnames:
   #- "k8ssingle1"
   #- "k8ssingle2"
   #- "k8ssingle3"
-  - "app20"
+  - k8scilium1
   rules:
   - backendRefs:
     - name: gundamappsvc

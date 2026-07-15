@@ -6,24 +6,24 @@ metadata:
   namespace: gundam
 spec:
   parentRefs:
-  - name: shared-gw-tls-listenerset-envoy
+  - name: gundam-listenerset-envoy
     kind: ListenerSet
     group: gateway.networking.k8s.io
   hostnames:
-  - k8ssingle3
+  - listenerset.app.teknews.cloud
   rules:
   - backendRefs:
-    - name: gundamappsvc
+    - name: titansvc
       port: 8080
       kind: Service
   - backendRefs:
-    - name: barbatossvc
+    - name: evasvc
       port: 8090
       kind: Service
     matches:
     - path:
         type: PathPrefix
-        value: /barbatos
+        value: /eva
     filters:
     - type: URLRewrite
       urlRewrite:

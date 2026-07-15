@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: gundam
+  labels:
+    name: gundam
+    env: dev
 spec: {}
 status: {}
 ---
@@ -136,4 +139,137 @@ spec:
     protocol: TCP
   selector:
     app: gundamapp    
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-eva
+ namespace: gundam
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to Gundam App 2</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API and the use of listenersets</h2>
+   <img src="https://vignette.wikia.nocookie.net/gunplabuilders/images/9/90/RG_Evangelion_Unit-01_box.jpg/revision/latest?cb=20200709010309" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: eva
+  name: eva
+  namespace: gundam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eva
+  template:
+    metadata:
+      labels:
+        app: eva
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-eva
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: gundam
+  name: evasvc
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8090
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: eva
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: index-html-titan
+ namespace: gundam
+data:
+ index.html: |
+   <html>
+   <h1>Welcome to Gundam App</h1>
+   </br>
+   <h2>This is a demo to illustrate Gateway API and the use of listenersets</h2>
+   <img src="https://i.pinimg.com/originals/5d/35/52/5d3552354ab9f1faed486a70c90d4aea.jpg" />
+   </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: titan
+  name: titan
+  namespace: gundam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: titan
+  template:
+    metadata:
+      labels:
+        app: titan
+    spec:
+      volumes:
+      - name: nginx-index-file
+        configMap:
+          name: index-html-titan
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+        - name: nginx-index-file
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: gundam
+  name: titansvc
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: titan
 ---

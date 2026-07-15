@@ -54,10 +54,17 @@ metadata:
   namespace: shared-gw
 spec:
   gatewayClassName: envoy-nodeport
+  allowedListeners:
+    namespaces:
+      from: Selector
+      selector:
+        matchExpressions:
+        - { key: kubernetes.io/metadata.name, operator: In, values: [shared-gw,gundam,demoapp] }
   listeners:
   - protocol: HTTPS
     port: 443
     name: shared-gw-tls-envoy-nodeport
+    hostname: gateway.app.teknews.cloud
     allowedRoutes:
       namespaces:
         from: Selector
@@ -94,51 +101,51 @@ spec:
        group: ""
        name: gundamapp-tls
        namespace: certificates
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: shared-gw-tls-traefik
-  namespace: shared-gw
-spec:
-  gatewayClassName: traefik
-  listeners:
-  - protocol: HTTPS
-    port: 443
-    name: shared-gw-tls-traefik
-    allowedRoutes:
-      namespaces:
-        from: Selector
-        selector:
-          matchExpressions:
-          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
-    tls:
-     certificateRefs:
-     - kind: Secret
-       group: ""
-       name: gundamapp-tls
-       namespace: certificates
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: shared-gw-tls-traefik-custom
-  namespace: shared-gw
-spec:
-  gatewayClassName: traefik-custom
-  listeners:
-  - protocol: HTTPS
-    port: 443
-    name: shared-gw-tls-traefik-custom
-    allowedRoutes:
-      namespaces:
-        from: Selector
-        selector:
-          matchExpressions:
-          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
-    tls:
-     certificateRefs:
-     - kind: Secret
-       group: ""
-       name: gundamapp-tls
-       namespace: certificates
+#---
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: Gateway
+#metadata:
+#  name: shared-gw-tls-traefik
+#  namespace: shared-gw
+#spec:
+#  gatewayClassName: traefik
+#  listeners:
+#  - protocol: HTTPS
+#    port: 443
+#    name: shared-gw-tls-traefik
+#    allowedRoutes:
+#      namespaces:
+#        from: Selector
+#        selector:
+#          matchExpressions:
+#          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
+#    tls:
+#     certificateRefs:
+#     - kind: Secret
+#       group: ""
+#       name: gundamapp-tls
+#       namespace: certificates
+#---
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: Gateway
+#metadata:
+#  name: shared-gw-tls-traefik-custom
+#  namespace: shared-gw
+#spec:
+#  gatewayClassName: traefik-custom
+#  listeners:
+#  - protocol: HTTPS
+#    port: 443
+#    name: shared-gw-tls-traefik-custom
+#    allowedRoutes:
+#      namespaces:
+#        from: Selector
+#        selector:
+#          matchExpressions:
+#          - { key: kubernetes.io/metadata.name, operator: In, values: [gundam,demoapp] }
+#    tls:
+#     certificateRefs:
+#     - kind: Secret
+#       group: ""
+#       name: gundamapp-tls
+#       namespace: certificates

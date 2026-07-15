@@ -1,26 +1,26 @@
 
-apiVersion: gateway.networking.k8s.io/v1
-kind: ListenerSet
-metadata:
-  name: gundam-listenerset
-  namespace: gundam
-spec:
-  parentRef:
-    namespace: shared-gw
-    name: shared-gw-tls-listenerset
-    kind: Gateway
-    group: gateway.networking.k8s.io
-  listeners:
-  - name: first
-    hostname: k8ssingle3
-    protocol: HTTPS
-    port: 443
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        group: ""
-        name: gundamapp-tls
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: ListenerSet
+#metadata:
+#  name: gundam-listenerset
+#  namespace: gundam
+#spec:
+#  parentRef:
+#    namespace: shared-gw
+#    name: shared-gw-tls-listenerset
+#    kind: Gateway
+#    group: gateway.networking.k8s.io
+#  listeners:
+#  - name: first
+#    hostname: k8ssingle3
+#    protocol: HTTPS
+#    port: 443
+#    tls:
+#      mode: Terminate
+#      certificateRefs:
+#      - kind: Secret
+#        group: ""
+#        name: gundamapp-tls
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: ListenerSet
@@ -30,12 +30,12 @@ metadata:
 spec:
   parentRef:
     namespace: shared-gw
-    name: shared-gw-tls-listenerset-envoy
+    name: shared-gw-tls-envoy-nodeport
     kind: Gateway
     group: gateway.networking.k8s.io
   listeners:
   - name: first
-    hostname: k8ssingle3
+    hostname: listenerset.app.teknews.cloud
     protocol: HTTPS
     port: 443
     tls:
@@ -43,27 +43,27 @@ spec:
       certificateRefs:
       - kind: Secret
         group: ""
-        name: gundamapp-tls
+        name: gundamapp-listenerset-tls
 ---
-apiVersion: gateway.networking.k8s.io/v1
-kind: ListenerSet
-metadata:
-  name: gundam-listenerset-nginx
-  namespace: gundam
-spec:
-  parentRef:
-    namespace: shared-gw
-    name: shared-gw-tls-listenerset-nginx
-    kind: Gateway
-    group: gateway.networking.k8s.io
-  listeners:
-  - name: first
-    hostname: k8ssingle3
-    protocol: HTTPS
-    port: 443
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - kind: Secret
-        group: ""
-        name: gundamapp-tls
+#apiVersion: gateway.networking.k8s.io/v1
+#kind: ListenerSet
+#metadata:
+#  name: gundam-listenerset-nginx
+#  namespace: gundam
+#spec:
+#  parentRef:
+#    namespace: shared-gw
+#    name: shared-gw-tls-listenerset-nginx
+#    kind: Gateway
+#    group: gateway.networking.k8s.io
+#  listeners:
+#  - name: first
+#    hostname: k8ssingle3
+#    protocol: HTTPS
+#    port: 443
+#    tls:
+#      mode: Terminate
+#      certificateRefs:
+#      - kind: Secret
+#        group: ""
+#        name: gundamapp-tls

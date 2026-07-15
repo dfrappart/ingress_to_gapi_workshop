@@ -5,13 +5,14 @@ metadata:
   namespace: gundam
 spec:
   parentRefs:
-  - name: shared-gw-tls
+  - name: shared-gw-tls-envoy-nodeport
     namespace: shared-gw
   hostnames:
   #- "gundam.app.teknews.cloud"
   #- "k8ssingle1"
   #- "k8ssingle2"
-  - "k8ssingle3"
+  #- "k8ssingle3"
+  - "gateway.app.teknews.cloud"
   rules:
   - backendRefs:
     - name: gundamappsvc

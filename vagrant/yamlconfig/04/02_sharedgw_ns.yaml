@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: shared-gw
+  labels:
+    name: shared-gw
+    env: dev
 spec: {}
 status: {}
 ---
